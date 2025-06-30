@@ -1,0 +1,515 @@
+<!DOCTYPE html>            <html lang="ar" dir="rtl">                <head>                
+  <meta charset="UTF-8" />                
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />                
+  <title>بلاغ - منصة التبليغ التشاركي</title>                
+  <!-- ربط ملفات Bootstrap و Bootstrap Icons و CSS -->                
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet" />                
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />                
+</head>                
+<style>                
+  /* تنسيقات عامة للصفحة */                
+body {                
+  font-family: 'Cairo', sans-serif;                
+  background: linear-gradient(to left, #eef2f3, #8e9eab);                
+  min-height: 100vh;                
+}            /* رأس الصفحة */    
+header {    
+background-color: #2c3e50;    
+color: white;    
+padding: 20px;    
+text-align: center;    
+border-bottom: 5px solid #3498db;    
+}    /* نموذج البلاغ */
+.form-section {
+background: white;
+border-radius: 20px;
+box-shadow: 0 0 20px rgba(0,0,0,0.15);
+padding: 30px;
+margin-top: 30px;
+}
+
+/* تذييل الصفحة */
+footer {
+text-align: center;
+padding: 15px;
+background-color: #2c3e50;
+color: white;
+margin-top: 30px;
+border-top: 5px solid #3498db;
+}
+
+/* خريطة الموقع */
+#map {
+margin-top: 20px;
+width: 100%;
+height: 300px;
+border-radius: 15px;
+overflow: hidden;
+}
+
+/* وسائط مثل الصوت والفيديو والصور */
+audio, video, canvas {
+width: 100%;
+border-radius: 15px;
+margin-top: 10px;
+}
+
+/* أزرار دائرية للأيقونات */
+.icon-btn {
+width: 50px;
+height: 50px;
+border-radius: 50%;
+font-size: 24px;
+display: flex;
+align-items: center;
+justify-content: center;
+margin: 5px;
+}
+
+/* مظهر حقل وصف المشكل */
+textarea#problemDescription {
+border-radius: 20px;
+padding: 10px 15px;
+resize: none;
+}
+
+/* كاميرا وميديا */
+#cameraPreview {
+width: 100%;
+max-height: 300px;
+border-radius: 15px;
+object-fit: cover;
+display: none;
+margin-top: 10px;
+}
+
+#mediaContainer {
+display: flex;
+flex-wrap: wrap;
+gap: 10px;
+margin-top: 15px;
+}
+
+.media-item {
+width: calc(50% - 5px);
+border-radius: 10px;
+overflow: hidden;
+position: relative;
+}
+
+.media-item img, .media-item video {
+width: 100%;
+height: 120px;
+object-fit: cover;
+}
+
+.delete-media {
+position: absolute;
+top: 5px;
+left: 5px;
+background: rgba(0,0,0,0.5);
+color: white;
+border: none;
+border-radius: 50%;
+width: 25px;
+height: 25px;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.camera-buttons {
+display: none;
+margin-top: 10px;
+}
+
+.hidden {
+display: none;
+}
+
+.permission-alert {
+position: fixed;
+top: 20px;
+left: 50%;
+transform: translateX(-50%);
+z-index: 1000;
+width: 90%;
+max-width: 500px;
+}
+</style>
+
+<body>                
+  <!-- رأس الصفحة -->                
+  <header>                
+    <h1>بلاغ</h1>                
+    <p>منصة التبليغ التشاركي عن مشاكل الأحياء</p>                
+  </header>                
+  <!-- Add this inside your <body>, below the <header> -->                
+<!-- <div style="margin-top:120px; text-align:center;">                
+  <button id="startMedia" class="btn btn-primary">Start Camera & Microphone</button>                
+  <br><br>                
+  <video id="video" width="320" height="240" autoplay playsinline style="display:none; border:1px solid #ccc;"></video>                
+  <audio id="audio" controls style="display:none;"></audio>                
+  <div id="mediaStatus" style="margin-top:10px; color:#FF8C00;"></div>                
+</div> -->            <script>                
+document.getElementById('startMedia').onclick = async function() {                
+  const video = document.getElementById('video');                
+  const audio = document.getElementById('audio');                
+  const status = document.getElementById('mediaStatus');                
+  try {                
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });                
+    video.srcObject = stream;                
+    video.style.display = 'block';                
+    audio.srcObject = stream;                
+    audio.style.display = 'block';                
+    status.textContent = "Camera and microphone are active!";                
+  } catch (err) {                
+    status.textContent = "Permission denied or not available: " + err.message;                
+  }                
+};                
+</script>              <div class="container">                
+    <div class="form-section">                
+      <h4 class="mb-4">أضف بلاغ جديد</h4>                
+      <form>                
+        <!-- اختيار نوع المشكل -->                
+        <div class="mb-3">                
+          <label for="reportType" class="form-label">نوع المشكل</label>                
+          <select class="form-select" id="reportType" required>                
+            <option selected disabled>اختر...</option>                
+            <option value="1">حفرة في الطريق</option>                
+            <option value="2">نفايات متراكمة</option>                
+            <option value="3">إنارة منعدمة</option>                
+            <option value="4">سرقة أو كريساج</option>                
+            <option value="5">أخرى</option>                
+          </select>                
+        </div>            <!-- وصف المشكل نصياً أو صوتياً -->                
+    <div class="mb-3">                
+      <label class="form-label">وصف المشكل</label>                
+      <div class="d-flex align-items-end">                
+        <textarea class="form-control flex-grow-1 me-2" id="problemDescription" rows="1" placeholder="اكتب وصفًا للمشكل..."></textarea>                
+        <button type="button" class="btn btn-secondary icon-btn" onclick="requestMicrophonePermission()" title="تسجيل صوتي">                
+          <i class="bi bi-mic-fill" id="micIcon"></i>                
+        </button>                
+      </div>                
+      <audio id="audioPlayback" controls class="hidden mt-2 w-100"></audio>                
+      
+<button id="deleteAudioBtn" class="btn btn-danger icon-btn hidden mt-2" onclick="deleteAudio(event)" title="حذف التسجيل الصوتي">
+  <i class="bi bi-trash-fill"></i>
+</button>
+
+
+
+    </div>                <!-- تحديد الموقع الجغرافي وعرضه على خريطة -->                
+<div class="mb-3">                
+  <label class="form-label">موقعك الجغرافي</label>                
+  <input type="text" class="form-control" id="location" readonly placeholder="انقر لتحديد موقعك..." required onclick="requestLocationPermission()" />                
+  <div id="map" style="display: none;"></div>                
+</div>                
+        
+<!-- إضافة الصور والفيديوهات -->                
+<div class="mb-3">                
+  <label class="form-label">إضافة صور أو فيديوهات</label>                
+  <button type="button" class="btn btn-primary w-100" id="openCameraBtn" onclick="requestCameraPermission()">                
+    <i class="bi bi-camera-fill"></i> فتح الكاميرا                
+  </button>                
+                  
+  <video id="cameraPreview" autoplay playsinline></video>                
+                  
+  <div class="camera-buttons" id="cameraButtons">                
+    <button type="button" class="btn btn-success me-2" onclick="capturePhoto()">                
+      <i class="bi bi-camera"></i> التقاط صورة                
+    </button>                
+    <button type="button" class="btn btn-danger" id="videoRecordBtn" onclick="toggleVideoRecording()">                
+      <i class="bi bi-record-circle"></i> تسجيل فيديو                
+    </button>                
+  </div>                
+                  
+  <div id="mediaContainer"></div>                
+</div>                
+                
+<!-- زر إرسال البلاغ -->                
+<div class="d-grid">                
+    <button type="submit" class="btn btn-primary" id="reportButton">إرسال البلاغ</button>                
+</div>
+
+  </form>                
+</div>      </div>              <!-- تذييل الصفحة -->              <footer>                
+    &copy; 2025 جميع الحقوق محفوظة - منصة بلاغ                
+  </footer>              <!-- رسالة إذن -->              <div id="permissionAlert" class="alert alert-info permission-alert hidden" role="alert">                
+    يرجى منح الإذن المطلوب لاستخدام هذه الميزة                
+  </div>           <script>                
+    // متغيرات عامة                
+    let audioRecorder, audioChunks = [];                
+    let isAudioRecording = false;                
+    let cameraStream = null;                
+    let videoRecorder = null;                
+    let videoChunks = [];                
+    let isVideoRecording = false;                
+    const mediaItems = [];                
+    let permissionAlertTimeout = null;                // عرض رسالة إذن                
+function showPermissionAlert(message) {                
+  const alert = document.getElementById("permissionAlert");                
+  alert.textContent = message;                
+  alert.classList.remove("hidden");                
+                  
+  if (permissionAlertTimeout) {                
+    clearTimeout(permissionAlertTimeout);                
+  }                
+                  
+  permissionAlertTimeout = setTimeout(() => {                
+    alert.classList.add("hidden");                
+  }, 5000);                
+}                
+            
+// طلب إذن الميكروفون                
+let microphoneStream = null;
+
+function requestMicrophonePermission() {
+  if (microphoneStream) {
+    toggleAudioRecording();
+    return;
+  }
+
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(stream => {
+      microphoneStream = stream;
+      toggleAudioRecording();
+    })
+    .catch(err => {
+      showPermissionAlert("يجب منح إذن استخدام الميكروفون لتسجيل الصوت");
+      console.error("Microphone permission denied:", err);
+    });
+}
+
+function toggleAudioRecording() {
+  if (!microphoneStream) {
+    showPermissionAlert("لم يتم منح إذن الميكروفون بعد");
+    return;
+  }
+
+  if (!isAudioRecording) {
+    audioRecorder = new MediaRecorder(microphoneStream);
+    audioChunks = [];
+
+    audioRecorder.ondataavailable = e => {
+      audioChunks.push(e.data);
+    };
+
+    audioRecorder.onstop = () => {
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      const audioURL = URL.createObjectURL(blob);
+      const audio = document.getElementById("audioPlayback");
+      audio.src = audioURL;
+      audio.classList.remove("hidden");
+      document.getElementById("deleteAudioBtn").classList.remove("hidden");
+    };
+
+    audioRecorder.start();
+    isAudioRecording = true;
+    document.getElementById("micIcon").className = "bi bi-stop-fill";
+  } else {
+    audioRecorder.stop();
+    isAudioRecording = false;
+    document.getElementById("micIcon").className = "bi bi-mic-fill";
+  }
+}                
+            
+// طلب إذن الموقع                
+function requestLocationPermission() {                
+  if (navigator.geolocation) {                
+    navigator.geolocation.getCurrentPosition(                
+      showPosition,                 
+      (error) => {                
+        showPermissionAlert("يجب منح إذن تحديد الموقع لعرض موقعك");                
+        showError(error);                
+      },                
+      { enableHighAccuracy: true }                
+    );                
+  } else {                
+    document.getElementById("location").value = "المتصفح لا يدعم تحديد الموقع.";                
+  }                
+}                
+            
+// عرض الموقع                
+function showPosition(position) {                
+  const lat = position.coords.latitude;                
+  const lon = position.coords.longitude;                
+  document.getElementById("location").value = `${lat}, ${lon}`;                
+  const mapDiv = document.getElementById("map");                
+  mapDiv.style.display = "block";                
+  mapDiv.innerHTML = `<iframe width="100%" height="300" frameborder="0" style="border-radius:15px;"                
+    src="https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed"></iframe>`;                
+}                
+            
+// عرض خطأ الموقع                
+function showError(error) {                
+  let msg = "فشل تحديد الموقع.";                
+  if (error.code === 1) msg = "تم رفض إذن تحديد الموقع.";                
+  else if (error.code === 2) msg = "الموقع غير متوفر.";                
+  else if (error.code === 3) msg = "انتهت مهلة تحديد الموقع.";                
+  document.getElementById("location").value = msg;                
+}                
+            
+// طلب إذن الكاميرا                
+function requestCameraPermission() {
+  if (cameraStream) {
+    toggleCamera();
+    return;
+  }
+
+  navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+    .then(stream => {
+      cameraStream = stream;
+      toggleCamera();
+    })
+    .catch(err => {
+      showPermissionAlert("يجب منح إذن استخدام الكاميرا لالتقاط الصور");
+      console.error("Camera permission denied:", err);
+    });
+}
+
+function toggleCamera() {
+  const cameraPreview = document.getElementById("cameraPreview");
+  const cameraButtons = document.getElementById("cameraButtons");
+  const openCameraBtn = document.getElementById("openCameraBtn");
+
+  if (!cameraStream) return;
+
+  if (cameraPreview.style.display === "block") {
+    cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+    cameraPreview.style.display = "none";
+    cameraButtons.style.display = "none";
+    openCameraBtn.innerHTML = '<i class="bi bi-camera-fill"></i> فتح الكاميرا';
+  } else {
+    cameraPreview.srcObject = cameraStream;
+    cameraPreview.style.display = "block";
+    cameraButtons.style.display = "block";
+    openCameraBtn.innerHTML = '<i class="bi bi-x-circle-fill"></i> إغلاق الكاميرا';
+  }
+}                
+            
+// التقاط صورة                
+function capturePhoto() {                
+  if (!cameraStream) return;                
+                  
+  if (mediaItems.length >= 4) {                
+    alert("يمكنك إضافة 4 وسائط كحد أقصى");                
+    return;                
+  }                
+                  
+  const cameraPreview = document.getElementById("cameraPreview");                
+  const canvas = document.createElement("canvas");                
+  canvas.width = cameraPreview.videoWidth;                
+  canvas.height = cameraPreview.videoHeight;                
+  const ctx = canvas.getContext("2d");                
+  ctx.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);                
+                  
+  const imageUrl = canvas.toDataURL("image/png");                
+  addMediaItem(imageUrl, "image");                
+}                
+            
+// تبديل تسجيل الفيديو                
+function toggleVideoRecording() {                
+  const videoRecordBtn = document.getElementById("videoRecordBtn");                
+                  
+  if (!isVideoRecording) {                
+    if (mediaItems.length >= 4) {                
+      alert("يمكنك إضافة 4 وسائط كحد أقصى");                
+      return;                
+    }                
+                    
+    videoChunks = [];                
+    videoRecorder = new MediaRecorder(cameraStream, { mimeType: "video/webm" });                
+    videoRecorder.ondataavailable = e => videoChunks.push(e.data);                
+    videoRecorder.onstop = () => {                
+      const blob = new Blob(videoChunks, { type: "video/webm" });                
+      const videoUrl = URL.createObjectURL(blob);                
+      addMediaItem(videoUrl, "video");                
+    };                
+    videoRecorder.start();                
+    isVideoRecording = true;                
+    videoRecordBtn.innerHTML = '<i class="bi bi-stop-fill"></i> إيقاف التسجيل';                
+  } else {                
+    videoRecorder.stop();                
+    isVideoRecording = false;                
+    videoRecordBtn.innerHTML = '<i class="bi bi-record-circle"></i> تسجيل فيديو';                
+  }                
+}                
+            
+// إضافة عنصر وسائط                
+function addMediaItem(url, type) {                
+  const mediaContainer = document.getElementById("mediaContainer");                
+  const mediaId = Date.now();                
+                  
+  const mediaItem = document.createElement("div");                
+  mediaItem.className = "media-item";                
+  mediaItem.id = `media-${mediaId}`;                
+                  
+  if (type === "image") {                
+    mediaItem.innerHTML = `                
+      <img src="${url}" alt="صورة البلاغ">                
+      <button class="delete-media" onclick="removeMediaItem('${mediaId}')">                
+        <i class="bi bi-trash"></i>                
+      </button>                
+    `;                
+  } else {                
+    mediaItem.innerHTML = `                
+      <video controls>                
+        <source src="${url}" type="video/webm">                
+      </video>                
+      <button class="delete-media" onclick="removeMediaItem('${mediaId}')">                
+        <i class="bi bi-trash"></i>                
+      </button>                
+    `;                
+  }                
+                  
+  mediaContainer.appendChild(mediaItem);                
+  mediaItems.push({ id: mediaId, url, type });                
+}                
+            
+// إزالة عنصر وسائط                
+function removeMediaItem(id) {                
+  const index = mediaItems.findIndex(item => item.id === id);                
+  if (index !== -1) {                
+    mediaItems.splice(index, 1);                
+    const mediaElement = document.getElementById(`media-${id}`);                
+    if (mediaElement) {                
+      mediaElement.remove();                
+    }                
+  }                
+}                
+            
+// إغلاق الكاميرا عند مغادرة الصفحة                
+window.addEventListener('beforeunload', () => {                
+  if (cameraStream) {                
+    cameraStream.getTracks().forEach(track => track.stop());                
+  }                
+  if (audioRecorder && isAudioRecording) {                
+    audioRecorder.stop();                
+  }                
+});                
+            
+// تحميل الموقع عند فتح الصفحة                
+window.addEventListener('load', () => {                
+  requestLocationPermission();                
+});
+
+document.getElementById('reportButton').addEventListener('click', function() {
+alert('Thank you for the report.');
+});
+function deleteAudio(event) {
+    if (event) event.preventDefault(); // منع إرسال النموذج
+  const audio = document.getElementById("audioPlayback");
+  const deleteBtn = document.getElementById("deleteAudioBtn");
+
+  audio.pause();
+  audio.src = "";
+  audio.classList.add("hidden");
+  deleteBtn.classList.add("hidden");
+}
+
+
+</script>              <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC_1uC5skvCnZEQAwjwXejXZsvRnxSWUYU&callback=initMap" async defer></script>            </body>
+
+</html>
